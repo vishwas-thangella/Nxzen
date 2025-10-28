@@ -76,6 +76,15 @@ export function Hero({ onRegisterClick }: HeroProps) {
             Nxzen Hackathon 2025
           </motion.h1>
 
+        <motion.p
+            className="text-lg md:text-xl text-gray-300 mb-12 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            collaboration with BlackBucks Pvt Ltd
+          </motion.p>
+
           <motion.h2
             className="text-2xl md:text-4xl text-white mb-8"
             initial={{ opacity: 0, y: 30 }}
@@ -108,14 +117,14 @@ export function Hero({ onRegisterClick }: HeroProps) {
               Register Now
               <ArrowRight className="ml-2" size={20} />
             </Button>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="border-2 border-purple-500 text-purple-300 hover:bg-purple-500/10 px-8 py-6"
             >
               <Download className="mr-2" size={20} />
               Download Hackathon Plan
-            </Button>
+            </Button> */}
           </motion.div>
         </div>
       </div>

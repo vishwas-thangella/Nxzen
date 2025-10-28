@@ -7,8 +7,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { UserPlus, CheckCircle2, Plus, X } from 'lucide-react';
+import { UserPlus, CheckCircle2, Plus, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../utils/firebase'; // You'll create this file
 
 interface Member {
   name: string;
@@ -29,6 +31,7 @@ export function RegistrationForm() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [category, setCategory] = useState('');
   const [members, setMembers] = useState<Member[]>([
@@ -40,7 +43,7 @@ export function RegistrationForm() {
   const MIN_MEMBERS = 3;
   const MAX_MEMBERS = 5;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate team name and category
@@ -77,21 +80,46 @@ export function RegistrationForm() {
       return;
     }
 
-    // Show success
-    setIsSubmitted(true);
-    toast.success('Registration successful! Check your email for confirmation.');
-    
-    // Reset form after 5 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setTeamName('');
-      setCategory('');
-      setMembers([
-        { name: '', email: '', phone: '', college: '' },
-        { name: '', email: '', phone: '', college: '' },
-        { name: '', email: '', phone: '', college: '' },
-      ]);
-    }, 5000);
+    // Submit to Firebase
+    setIsSubmitting(true);
+    try {
+      const teamsCollection = collection(db, 'teams');
+      
+      const teamData = {
+        teamName: teamName.trim(),
+        category,
+        members: members.map(member => ({
+          name: member.name.trim(),
+          email: member.email.trim().toLowerCase(),
+          phone: member.phone.trim(),
+          college: member.college.trim(),
+        })),
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(teamsCollection, teamData);
+      
+      // Show success
+      setIsSubmitted(true);
+      toast.success('Registration successful! Check your email for confirmation.');
+      
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setTeamName('');
+        setCategory('');
+        setMembers([
+          { name: '', email: '', phone: '', college: '' },
+          { name: '', email: '', phone: '', college: '' },
+          { name: '', email: '', phone: '', college: '' },
+        ]);
+      }, 5000);
+    } catch (error) {
+      console.error('Error submitting registration:', error);
+      toast.error('Failed to submit registration. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddMember = () => {
@@ -191,7 +219,26 @@ export function RegistrationForm() {
                   placeholder="Enter your team name"
                   className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                   required
+                  disabled={isSubmitting}
                 />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-gray-300">Category *</Label>
+                <Select value={category} onValueChange={setCategory} disabled={isSubmitting}>
+                  <SelectTrigger className="bg-black/50 border-purple-500/30 text-white focus:border-purple-500">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="web">Web Development</SelectItem>
+                    <SelectItem value="mobile">Mobile Development</SelectItem>
+                    <SelectItem value="ai-ml">AI/ML</SelectItem>
+                    <SelectItem value="blockchain">Blockchain</SelectItem>
+                    <SelectItem value="iot">IoT</SelectItem>
+                    <SelectItem value="open">Open Innovation</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Team Members */}
@@ -221,6 +268,7 @@ export function RegistrationForm() {
                           variant="ghost"
                           size="sm"
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          disabled={isSubmitting}
                         >
                           <X size={18} className="mr-1" />
                           Remove
@@ -238,6 +286,7 @@ export function RegistrationForm() {
                           placeholder={`Enter member ${index + 1} name`}
                           className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
 
@@ -251,6 +300,7 @@ export function RegistrationForm() {
                           placeholder={`member${index + 1}@example.com`}
                           className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
 
@@ -264,6 +314,7 @@ export function RegistrationForm() {
                           placeholder="+91 XXXXXXXXXX"
                           className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
 
@@ -276,6 +327,7 @@ export function RegistrationForm() {
                           placeholder="Enter college name"
                           className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     </div>
@@ -295,6 +347,7 @@ export function RegistrationForm() {
                     onClick={handleAddMember}
                     variant="outline"
                     className="w-full border-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 py-6"
+                    disabled={isSubmitting}
                   >
                     <Plus className="mr-2" size={20} />
                     Add Team Member ({members.length}/{MAX_MEMBERS})
@@ -304,29 +357,23 @@ export function RegistrationForm() {
 
               {/* Divider */}
               <div className="border-t border-purple-500/20" />
-
-              {/* Category Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="category" className="text-gray-300">Round 1 Category *</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-black/50 border-purple-500/30 text-white focus:border-purple-500">
-                    <SelectValue placeholder="Choose category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-purple-500/30">
-                    <SelectItem value="graph">Graph Isolation</SelectItem>
-                    <SelectItem value="anomaly">Anomaly Detection</SelectItem>
-                    <SelectItem value="integration">Integration Mini-App</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <Button
                 type="submit"
                 size="lg"
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-6 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300"
+                disabled={isSubmitting}
               >
-                <UserPlus className="mr-2" size={20} />
-                Submit Registration
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 animate-spin" size={20} />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2" size={20} />
+                    Submit Registration
+                  </>
+                )}
               </Button>
             </form>
           </Card>

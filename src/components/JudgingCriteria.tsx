@@ -80,28 +80,11 @@ export function JudgingCriteria() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-xl text-white">{criterion.name}</h3>
                     <span className="text-2xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      {criterion.points} pts
+                      {/* {criterion.points} pts */}
                     </span>
                   </div>
                   <p className="text-gray-400 text-sm mb-4">{criterion.description}</p>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Points</span>
-                  <span>{criterion.points} / 100</span>
-                </div>
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={isInView ? { width: '100%' } : {}}
-                  transition={{ duration: 1, delay: index * 0.1 + 0.3 }}
-                >
-                  <Progress 
-                    value={criterion.points * 4} 
-                    className="h-2 bg-gray-800"
-                  />
-                </motion.div>
               </div>
             </motion.div>
           ))}
@@ -112,9 +95,6 @@ export function JudgingCriteria() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <div className="text-4xl mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Total: 100 Points
-            </div>
             <p className="text-gray-300">
               All criteria combined determine your final score and ranking
             </p>

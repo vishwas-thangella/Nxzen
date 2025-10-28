@@ -33,7 +33,7 @@ export function Footer() {
                 className="text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 justify-center md:justify-end"
               >
                 <Mail size={16} />
-                contact@nxzen.com
+                contact@blackbucks.com
               </a>
             </div>
 

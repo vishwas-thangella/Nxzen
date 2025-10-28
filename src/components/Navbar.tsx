@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Menu, X } from 'lucide-react';
+import logo from '../assets/logo.svg';
+import { motion } from 'motion/react';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -39,10 +41,13 @@ export function Navbar() {
     >
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white">N</span>
-          </div>
-          <span className="text-white">Nxzen Hackathon</span>
+          <motion.img src={logo} alt="" className="w-30 h-auto" initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}/>
+          {/* <div className="flex flex-col">
+            <span className="text-white">Nxzen Hackathon</span>
+            <span className="text-xs">in collaboration with BlackBucks</span>
+          </div> */}
         </div>
 
         {/* Desktop Navigation */}
