@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useInView } from 'motion/react';
 import { useRef } from 'react';
 import { Card } from './ui/card';
@@ -10,51 +10,71 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { UserPlus, CheckCircle2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
+interface Member {
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+}
+
+const GRADIENT_COLORS = [
+  'from-blue-500 to-purple-600',
+  'from-purple-500 to-pink-600',
+  'from-pink-500 to-red-600',
+  'from-orange-500 to-yellow-600',
+  'from-green-500 to-teal-600',
+];
+
 export function RegistrationForm() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showMember2, setShowMember2] = useState(false);
-  const [formData, setFormData] = useState({
-    teamName: '',
-    member1Name: '',
-    member1Email: '',
-    member1Phone: '',
-    member1College: '',
-    member2Name: '',
-    member2Email: '',
-    member2Phone: '',
-    member2College: '',
-    category: '',
-  });
+  const [teamName, setTeamName] = useState('');
+  const [category, setCategory] = useState('');
+  const [members, setMembers] = useState<Member[]>([
+    { name: '', email: '', phone: '', college: '' },
+    { name: '', email: '', phone: '', college: '' },
+    { name: '', email: '', phone: '', college: '' },
+  ]);
+
+  const MIN_MEMBERS = 3;
+  const MAX_MEMBERS = 5;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation for required fields
-    if (!formData.teamName || !formData.member1Name || !formData.member1Email || !formData.member1Phone || 
-        !formData.member1College || !formData.category) {
-      toast.error('Please fill in all required fields');
+    // Validate team name and category
+    if (!teamName.trim()) {
+      toast.error('Please enter a team name');
       return;
     }
 
-    // Email validation for member 1
+    if (!category) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    // Validate all members
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.member1Email)) {
-      toast.error('Please enter a valid email address for Member 1');
-      return;
+    
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      
+      if (!member.name.trim() || !member.email.trim() || !member.phone.trim() || !member.college.trim()) {
+        toast.error(`Please fill in all fields for Member ${i + 1}`);
+        return;
+      }
+
+      if (!emailRegex.test(member.email)) {
+        toast.error(`Please enter a valid email address for Member ${i + 1}`);
+        return;
+      }
     }
 
-    // Validation for member 2 if shown
-    if (showMember2) {
-      if (!formData.member2Name || !formData.member2Email || !formData.member2Phone || !formData.member2College) {
-        toast.error('Please fill in all team member details');
-        return;
-      }
-      if (!emailRegex.test(formData.member2Email)) {
-        toast.error('Please enter a valid email address for Member 2');
-        return;
-      }
+    // Validate team size
+    if (members.length < MIN_MEMBERS) {
+      toast.error(`Team must have at least ${MIN_MEMBERS} members`);
+      return;
     }
 
     // Show success
@@ -64,39 +84,32 @@ export function RegistrationForm() {
     // Reset form after 5 seconds
     setTimeout(() => {
       setIsSubmitted(false);
-      setShowMember2(false);
-      setFormData({
-        teamName: '',
-        member1Name: '',
-        member1Email: '',
-        member1Phone: '',
-        member1College: '',
-        member2Name: '',
-        member2Email: '',
-        member2Phone: '',
-        member2College: '',
-        category: '',
-      });
+      setTeamName('');
+      setCategory('');
+      setMembers([
+        { name: '', email: '', phone: '', college: '' },
+        { name: '', email: '', phone: '', college: '' },
+        { name: '', email: '', phone: '', college: '' },
+      ]);
     }, 5000);
   };
 
   const handleAddMember = () => {
-    setShowMember2(true);
+    if (members.length < MAX_MEMBERS) {
+      setMembers([...members, { name: '', email: '', phone: '', college: '' }]);
+    }
   };
 
-  const handleRemoveMember = () => {
-    setShowMember2(false);
-    setFormData(prev => ({
-      ...prev,
-      member2Name: '',
-      member2Email: '',
-      member2Phone: '',
-      member2College: '',
-    }));
+  const handleRemoveMember = (index: number) => {
+    if (members.length > MIN_MEMBERS) {
+      setMembers(members.filter((_, i) => i !== index));
+    }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleMemberChange = (index: number, field: keyof Member, value: string) => {
+    const updatedMembers = [...members];
+    updatedMembers[index][field] = value;
+    setMembers(updatedMembers);
   };
 
   if (isSubmitted) {
@@ -156,7 +169,7 @@ export function RegistrationForm() {
             Register Your Team
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Fill in the details for your team (Team size: 1-2 members)
+            Fill in the details for your team (Team size: {MIN_MEMBERS}-{MAX_MEMBERS} members)
           </p>
         </motion.div>
 
@@ -173,78 +186,105 @@ export function RegistrationForm() {
                 <Label htmlFor="teamName" className="text-gray-300">Team Name *</Label>
                 <Input
                   id="teamName"
-                  value={formData.teamName}
-                  onChange={(e) => handleChange('teamName', e.target.value)}
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
                   placeholder="Enter your team name"
                   className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
                   required
                 />
               </div>
 
-              {/* Member 1 Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white">1</span>
-                  </div>
-                  <h3 className="text-xl text-white">Member 1 Details</h3>
-                </div>
+              {/* Team Members */}
+              <AnimatePresence mode="popLayout">
+                {members.map((member, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    {index > 0 && <div className="border-t border-purple-500/20" />}
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 bg-gradient-to-br ${GRADIENT_COLORS[index % GRADIENT_COLORS.length]} rounded-lg flex items-center justify-center`}>
+                          <span className="text-white">{index + 1}</span>
+                        </div>
+                        <h3 className="text-xl text-white">Member {index + 1} Details</h3>
+                      </div>
+                      {members.length > MIN_MEMBERS && (
+                        <Button
+                          type="button"
+                          onClick={() => handleRemoveMember(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <X size={18} className="mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="member1Name" className="text-gray-300">Name *</Label>
-                    <Input
-                      id="member1Name"
-                      value={formData.member1Name}
-                      onChange={(e) => handleChange('member1Name', e.target.value)}
-                      placeholder="Enter member 1 name"
-                      className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                      required
-                    />
-                  </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor={`member${index}Name`} className="text-gray-300">Name *</Label>
+                        <Input
+                          id={`member${index}Name`}
+                          value={member.name}
+                          onChange={(e) => handleMemberChange(index, 'name', e.target.value)}
+                          placeholder={`Enter member ${index + 1} name`}
+                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="member1Email" className="text-gray-300">Email *</Label>
-                    <Input
-                      id="member1Email"
-                      type="email"
-                      value={formData.member1Email}
-                      onChange={(e) => handleChange('member1Email', e.target.value)}
-                      placeholder="member1@example.com"
-                      className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                      required
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`member${index}Email`} className="text-gray-300">Email *</Label>
+                        <Input
+                          id={`member${index}Email`}
+                          type="email"
+                          value={member.email}
+                          onChange={(e) => handleMemberChange(index, 'email', e.target.value)}
+                          placeholder={`member${index + 1}@example.com`}
+                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="member1Phone" className="text-gray-300">Phone Number *</Label>
-                    <Input
-                      id="member1Phone"
-                      type="tel"
-                      value={formData.member1Phone}
-                      onChange={(e) => handleChange('member1Phone', e.target.value)}
-                      placeholder="+91 XXXXXXXXXX"
-                      className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                      required
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`member${index}Phone`} className="text-gray-300">Phone Number *</Label>
+                        <Input
+                          id={`member${index}Phone`}
+                          type="tel"
+                          value={member.phone}
+                          onChange={(e) => handleMemberChange(index, 'phone', e.target.value)}
+                          placeholder="+91 XXXXXXXXXX"
+                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="member1College" className="text-gray-300">College Name *</Label>
-                    <Input
-                      id="member1College"
-                      value={formData.member1College}
-                      onChange={(e) => handleChange('member1College', e.target.value)}
-                      placeholder="Enter college name"
-                      className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`member${index}College`} className="text-gray-300">College Name *</Label>
+                        <Input
+                          id={`member${index}College`}
+                          value={member.college}
+                          onChange={(e) => handleMemberChange(index, 'college', e.target.value)}
+                          placeholder="Enter college name"
+                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
               {/* Add Team Member Button */}
-              {!showMember2 && (
+              {members.length < MAX_MEMBERS && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -257,105 +297,18 @@ export function RegistrationForm() {
                     className="w-full border-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/60 py-6"
                   >
                     <Plus className="mr-2" size={20} />
-                    Add Team Member
+                    Add Team Member ({members.length}/{MAX_MEMBERS})
                   </Button>
                 </motion.div>
               )}
 
-              {/* Member 2 Section */}
-              {showMember2 && (
-                <>
-                  {/* Divider */}
-                  <div className="border-t border-purple-500/20" />
-
-                  <motion.div
-                    className="space-y-4"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                          <span className="text-white">2</span>
-                        </div>
-                        <h3 className="text-xl text-white">Member 2 Details</h3>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleRemoveMember}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      >
-                        <X size={18} className="mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="member2Name" className="text-gray-300">Name *</Label>
-                        <Input
-                          id="member2Name"
-                          value={formData.member2Name}
-                          onChange={(e) => handleChange('member2Name', e.target.value)}
-                          placeholder="Enter member 2 name"
-                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                          required={showMember2}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="member2Email" className="text-gray-300">Email *</Label>
-                        <Input
-                          id="member2Email"
-                          type="email"
-                          value={formData.member2Email}
-                          onChange={(e) => handleChange('member2Email', e.target.value)}
-                          placeholder="member2@example.com"
-                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                          required={showMember2}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="member2Phone" className="text-gray-300">Phone Number *</Label>
-                        <Input
-                          id="member2Phone"
-                          type="tel"
-                          value={formData.member2Phone}
-                          onChange={(e) => handleChange('member2Phone', e.target.value)}
-                          placeholder="+91 XXXXXXXXXX"
-                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                          required={showMember2}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="member2College" className="text-gray-300">College Name *</Label>
-                        <Input
-                          id="member2College"
-                          value={formData.member2College}
-                          onChange={(e) => handleChange('member2College', e.target.value)}
-                          placeholder="Enter college name"
-                          className="bg-black/50 border-purple-500/30 text-white placeholder:text-gray-500 focus:border-purple-500"
-                          required={showMember2}
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Divider */}
-                  <div className="border-t border-purple-500/20" />
-                </>
-              )}
+              {/* Divider */}
+              <div className="border-t border-purple-500/20" />
 
               {/* Category Selection */}
               <div className="space-y-2">
                 <Label htmlFor="category" className="text-gray-300">Round 1 Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger className="bg-black/50 border-purple-500/30 text-white focus:border-purple-500">
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
