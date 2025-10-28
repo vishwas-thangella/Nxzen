@@ -101,7 +101,7 @@ export function RegistrationForm() {
       
       // Show success
       setIsSubmitted(true);
-      toast.success('Registration successful! Check your email for confirmation.');
+      toast.success('Registration successful! ');
       
       // Reset form after 5 seconds
       setTimeout(() => {
