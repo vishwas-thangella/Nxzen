@@ -55,7 +55,7 @@ export function JudgingCriteria() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl md:text-5xl mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent h-20">
             Judging Criteria
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">

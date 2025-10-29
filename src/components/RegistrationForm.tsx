@@ -251,9 +251,6 @@ export default function RegistrationForm() {
               <p className="text-lg text-gray-300 mb-2">
                 Thank you for registering for Nxzen Hackathon 2025!
               </p>
-              <p className="text-gray-400">
-                You'll receive a confirmation email shortly with further instructions.
-              </p>
             </Card>
           </motion.div>
         </div>
@@ -282,7 +279,7 @@ export default function RegistrationForm() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl md:text-5xl mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-4xl h-20 md:text-5xl mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             Register Your Team
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">

@@ -36,36 +36,6 @@ export function Footer() {
                 contact@blackbucks.com
               </a>
             </div>
-
-            <div className="flex gap-4 justify-center md:justify-end">
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center hover:bg-purple-500/30 hover:border-purple-500/50 transition-all duration-300"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={20} className="text-purple-400" />
-              </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center hover:bg-purple-500/30 hover:border-purple-500/50 transition-all duration-300"
-                aria-label="GitHub"
-              >
-                <Github size={20} className="text-purple-400" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center hover:bg-purple-500/30 hover:border-purple-500/50 transition-all duration-300"
-                aria-label="Instagram"
-              >
-                <Instagram size={20} className="text-purple-400" />
-              </a>
-            </div>
           </div>
         </div>
 
