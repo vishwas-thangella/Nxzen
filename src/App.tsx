@@ -6,7 +6,7 @@ import { About } from './components/About';
 import { RoundsOverview } from './components/RoundsOverview';
 import { ChallengeTracks } from './components/ChallengeTracks';
 import { JudgingCriteria } from './components/JudgingCriteria';
-import { RegistrationForm } from './components/RegistrationForm';
+import RegistrationForm from './components/RegistrationForm';
 import { Timeline } from './components/Timeline';
 import { Footer } from './components/Footer';
 import { AdminPanel } from './components/Admin';

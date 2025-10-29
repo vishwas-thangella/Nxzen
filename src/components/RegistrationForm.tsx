@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useInView } from 'motion/react';
 import { useRef } from 'react';
-import { Card } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Button } from './ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, CheckCircle2, Plus, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
+import { collection, addDoc, serverTimestamp, query, getDocs } from 'firebase/firestore';
 import { db } from '../utils/firebase'; // You'll create this file
 
 interface Member {
@@ -27,7 +27,7 @@ const GRADIENT_COLORS = [
   'from-green-500 to-teal-600',
 ];
 
-export function RegistrationForm() {
+export default function RegistrationForm() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -42,6 +42,86 @@ export function RegistrationForm() {
 
   const MIN_MEMBERS = 3;
   const MAX_MEMBERS = 5;
+
+  const checkForDuplicates = async (members: Member[]) => {
+    try {
+      // Get all existing teams from Firebase
+      const teamsCollection = collection(db, 'teams');
+      const teamsQuery = query(teamsCollection);
+      const querySnapshot = await getDocs(teamsQuery);
+      
+      // Extract all registered emails and phone numbers
+      const registeredEmails = new Set<string>();
+      const registeredPhones = new Set<string>();
+      
+      querySnapshot.forEach((doc) => {
+        const teamData = doc.data();
+        if (teamData.members && Array.isArray(teamData.members)) {
+          teamData.members.forEach((member: any) => {
+            if (member.email) {
+              registeredEmails.add(member.email.toLowerCase().trim());
+            }
+            if (member.phone) {
+              registeredPhones.add(member.phone.trim());
+            }
+          });
+        }
+      });
+      
+      // Check current members against registered data
+      for (let i = 0; i < members.length; i++) {
+        const member = members[i];
+        const normalizedEmail = member.email.toLowerCase().trim();
+        const normalizedPhone = member.phone.trim();
+        
+        if (registeredEmails.has(normalizedEmail)) {
+          return {
+            isDuplicate: true,
+            message: `Member ${i + 1} (${member.name}) is already registered with email: ${member.email}`
+          };
+        }
+        
+        if (registeredPhones.has(normalizedPhone)) {
+          return {
+            isDuplicate: true,
+            message: `Member ${i + 1} (${member.name}) is already registered with phone number: ${member.phone}`
+          };
+        }
+      }
+      
+      // Check for duplicates within the current team
+      const currentEmails = new Set<string>();
+      const currentPhones = new Set<string>();
+      
+      for (let i = 0; i < members.length; i++) {
+        const member = members[i];
+        const normalizedEmail = member.email.toLowerCase().trim();
+        const normalizedPhone = member.phone.trim();
+        
+        if (currentEmails.has(normalizedEmail)) {
+          return {
+            isDuplicate: true,
+            message: `Duplicate email found in your team: ${member.email}`
+          };
+        }
+        
+        if (currentPhones.has(normalizedPhone)) {
+          return {
+            isDuplicate: true,
+            message: `Duplicate phone number found in your team: ${member.phone}`
+          };
+        }
+        
+        currentEmails.add(normalizedEmail);
+        currentPhones.add(normalizedPhone);
+      }
+      
+      return { isDuplicate: false, message: '' };
+    } catch (error) {
+      console.error('Error checking for duplicates:', error);
+      throw new Error('Failed to verify registration data. Please try again.');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +163,15 @@ export function RegistrationForm() {
     // Submit to Firebase
     setIsSubmitting(true);
     try {
+      // Check for duplicate registrations
+      const duplicateCheck = await checkForDuplicates(members);
+      
+      if (duplicateCheck.isDuplicate) {
+        toast.error(duplicateCheck.message);
+        setIsSubmitting(false);
+        return;
+      }
+      
       const teamsCollection = collection(db, 'teams');
       
       const teamData = {
@@ -101,7 +190,7 @@ export function RegistrationForm() {
       
       // Show success
       setIsSubmitted(true);
-      toast.success('Registration successful! ');
+      toast.success('Registration successful!');
       
       // Reset form after 5 seconds
       setTimeout(() => {
